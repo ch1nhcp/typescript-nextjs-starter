@@ -1,6 +1,11 @@
 :root {
+  /* Color tokens */
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Typography tokens */
+  --font-size-base: 16px;
+  --line-height-base: 1.5;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,9 +22,17 @@ body {
 }
 
 body {
+  /* Declared here (not on :root) because `--font-geist-sans` is injected by
+   * next/font onto <body>; a var() referencing it only resolves in this scope.
+   * The fallbacks keep text readable before the web font loads or if it fails.
+   * Children inherit the resolved value, so `var(--font-sans)` works everywhere. */
+  --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

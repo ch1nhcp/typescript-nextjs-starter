@@ -5,16 +5,42 @@ import './src/lib/env/server';
 import { redirects } from './redirects';
 
 /**
- * CSPs that we're not adding (as it can change from project to project):
- * frame-src, connect-src, script-src, child-src, style-src, worker-src, font-src, media-src, and img-src
+ * Content Security Policy (CSP).
+ *
+ * This is an intentionally strict-but-minimal baseline. Each directive is a
+ * separate entry so it's easy to see what's locked down and what to open up.
+ *
+ * How to extend when you add third-party resources:
+ * - Analytics / external scripts → add the origin to `script-src`
+ *   (e.g. `script-src 'self' https://plausible.io`).
+ * - Image CDN / remote images → add the origin to `img-src`
+ *   (e.g. `img-src 'self' data: https://images.example.com`).
+ * - API / fetch / websocket calls → add the origin to `connect-src`.
+ * - Custom fonts → add the origin to `font-src`.
+ * - Embedded iframes (video, maps) → add the origin to `frame-src`.
+ *
+ * Notes:
+ * - No `default-src` is set so this doesn't break Next.js' inline runtime
+ *   scripts/styles out of the box. Once you adopt a nonce-based setup you can
+ *   tighten this into a full `default-src 'self'` policy.
+ * - `report-to default` sends violation reports to a `default` reporting group;
+ *   wire up a `Report-To`/`Reporting-Endpoints` header to actually collect them.
  */
-const ContentSecurityPolicy = `
-  object-src 'none';
-  base-uri 'self';
-  frame-ancestors 'self';
-  manifest-src 'self';
-  report-to default;
-`;
+const contentSecurityPolicyDirectives = [
+  "object-src 'none'",
+  "base-uri 'self'",
+  "frame-ancestors 'self'",
+  "manifest-src 'self'",
+  'report-to default',
+  // Add resource directives here as the app grows, for example:
+  // "script-src 'self'",
+  // "style-src 'self' 'unsafe-inline'",
+  // "img-src 'self' data:",
+  // "connect-src 'self'",
+  // "font-src 'self'",
+];
+
+const contentSecurityPolicy = contentSecurityPolicyDirectives.join('; ');
 
 // For more information, check https://nextjs.org/docs/app/api-reference/config/next-config-js/headers
 const securityHeaders = [
@@ -27,16 +53,16 @@ const securityHeaders = [
     value: 'max-age=63072000; includeSubDomains; preload',
   },
   {
-    key: 'X-XSS-Protection',
-    value: '1; mode=block',
-  },
-  {
     key: 'X-Content-Type-Options',
     value: 'nosniff',
   },
   {
+    // `strict-origin-when-cross-origin` is the modern default: it sends the full
+    // URL same-origin, only the origin cross-origin, and nothing when downgrading
+    // to HTTP. `no-referrer-when-downgrade` (the old default) leaks full URLs
+    // cross-origin.
     key: 'Referrer-Policy',
-    value: 'no-referrer-when-downgrade',
+    value: 'strict-origin-when-cross-origin',
   },
   {
     key: 'Permissions-Policy',
@@ -44,7 +70,7 @@ const securityHeaders = [
   },
   {
     key: 'Content-Security-Policy',
-    value: ContentSecurityPolicy.replace(/\n/g, ''),
+    value: contentSecurityPolicy,
   },
 ];
 

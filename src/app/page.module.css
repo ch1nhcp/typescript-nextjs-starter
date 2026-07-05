@@ -1,6 +1,8 @@
 .page {
-  --background: #fafafa;
-  --foreground: #fff;
+  /* Page-scoped surface tokens. Named locally so they don't shadow the global
+   * `--background` / `--foreground` tokens defined in globals.css. */
+  --surface: #fafafa;
+  --surface-card: #fff;
 
   --text-primary: #000;
   --text-secondary: #666;
@@ -11,8 +13,8 @@
   min-height: 100vh;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-geist-sans);
-  background-color: var(--background);
+  font-family: var(--font-sans);
+  background-color: var(--surface);
 }
 
 .main {
@@ -23,7 +25,7 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  background-color: var(--foreground);
+  background-color: var(--surface-card);
   padding: 120px 60px;
 }
 
@@ -81,7 +83,7 @@
 
 a.primary {
   background: var(--text-primary);
-  color: var(--background);
+  color: var(--surface);
   gap: 8px;
 }
 
@@ -115,8 +117,8 @@ a.primary {
   }
 
   .page {
-    --background: #000;
-    --foreground: #000;
+    --surface: #000;
+    --surface-card: #000;
 
     --text-primary: #ededed;
     --text-secondary: #999;

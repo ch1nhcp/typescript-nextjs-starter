@@ -32,6 +32,7 @@
 - ⛑ TypeScript
 - 📏 Oxlint — To find and fix problems in your code
 - 💖 Oxfmt — High-performance formatter for consistent style
+- 🧪 Vitest — Unit/integration testing with Testing Library
 - 🐶 Husky — For running scripts before committing
 - 🚓 Commitlint — To make sure your commit messages follow the convention
 - 🖌 Renovate — To keep your dependencies up to date
@@ -66,6 +67,59 @@ pnpm dev
 
 Open `http://localhost:3000` with your browser to see the result.
 
+### First-time setup checklist
+
+1. Install the Node version from [`.nvmrc`](.nvmrc) (`nvm use`).
+2. Enable Corepack so the pinned pnpm version is used: `corepack enable`.
+3. Install dependencies: `pnpm install`.
+4. (Optional) Create a `.env.local` file for local environment variables.
+5. Start the app: `pnpm dev`.
+6. Before opening a PR, run `pnpm verify` (see [Local workflow](#local-workflow)).
+
+### Local workflow
+
+Run these before pushing so local checks match CI (this is exactly what CI runs):
+
+```bash
+pnpm type-check   # TypeScript, no emit
+pnpm test         # Vitest unit/integration tests
+pnpm format:ci    # Oxfmt formatting check
+pnpm lint         # Oxlint (type-aware)
+pnpm build        # Production build
+
+pnpm verify       # Shortcut: type-check + test + format:ci + lint
+```
+
+CI (`.github/workflows/ci.yml`) runs install → type-check → test → build → format → lint
+on every pull request, so a green `pnpm verify` locally means far fewer CI surprises.
+You can also enable the opt-in Husky `pre-push` hook to run `pnpm verify` automatically
+(see [Husky](#husky)).
+
+### What this starter gives you
+
+- A configured Next.js 16 + React 19 + TypeScript baseline with strict compiler options.
+- Fast linting/formatting (Oxlint + Oxfmt) and a type-aware lint step.
+- A test setup (Vitest + Testing Library) with example smoke and config tests.
+- Type-safe environment variables (T3 Env + Zod).
+- Sensible security headers and an extensible CSP baseline.
+- CI that type-checks, tests, builds, and lints every PR.
+- Conventions for growing the codebase — see [`docs/architecture.md`](docs/architecture.md).
+
+### What you still need before production
+
+This is a foundation, not a finished app. Before shipping, plan to add:
+
+- [ ] Real content and routes (the demo `/` page is a placeholder).
+- [ ] An error reporting / monitoring integration (e.g. Sentry).
+- [ ] Analytics (remember to update the CSP in `next.config.ts`).
+- [ ] Tighten the CSP toward a nonce-based `default-src 'self'` policy and wire up
+      a reporting endpoint for `report-to`.
+- [ ] Authentication/authorization if your app needs it.
+- [ ] A data layer (database/API) with validation at every boundary — see
+      [`docs/boundary-validation.md`](docs/boundary-validation.md).
+- [ ] E2E tests for critical flows (e.g. Playwright) if the app grows complex.
+- [ ] Environment variables configured in your hosting provider.
+
 ## Testimonials
 
 > [**“This starter is by far the best TypeScript starter for Next.js. Feature packed but un-opinionated at the same time!”**](https://github.com/jpedroschmitz/typescript-nextjs-starter/issues/87#issue-789642190)<br>
@@ -94,15 +148,20 @@ List of websites that started off with Next.js TypeScript Starter:
 
 ### Requirements
 
-- Node.js >= 24
-- pnpm 10
+- Node.js 24 — pinned in [`.nvmrc`](.nvmrc) and used by CI. Run `nvm use` to match it.
+- pnpm 11 — pinned via the `packageManager` field in `package.json`. Enable it with
+  `corepack enable`.
 
 ### Directory Structure
 
 - [`.github`](.github) — GitHub configuration including the CI workflow.<br>
 - [`.husky`](.husky) — Husky configuration and hooks.<br>
+- [`docs`](./docs) — Architecture and contributor conventions.<br>
 - [`public`](./public) — Static assets such as robots.txt, images, and favicon.<br>
 - [`src`](./src) — Application source code, including pages, components, styles.
+
+For where feature code, shared UI, and server code should live, see
+[`docs/architecture.md`](docs/architecture.md).
 
 ### Scripts
 
@@ -111,6 +170,9 @@ List of websites that started off with Next.js TypeScript Starter:
 - `pnpm build:analyze` — Analyze the production build to see the bundle size.
 - `pnpm start` — Starts the application in production mode.
 - `pnpm type-check` — Validate code using TypeScript compiler.
+- `pnpm test` — Run the Vitest test suite once.
+- `pnpm test:watch` — Run Vitest in watch mode for local development.
+- `pnpm verify` — Run type-check, tests, format check, and lint together (matches CI).
 - `pnpm lint` — Runs Oxlint for all files in the `src` directory.
 - `pnpm lint:fix` — Runs Oxlint fix for all files in the `src` directory.
 - `pnpm format` — Runs Oxfmt for all files in the `src` directory.
@@ -143,21 +205,42 @@ When adding additional environment variables, the schema in `./src/lib/env/clien
 
 To add redirects, update the `redirects` array in `./redirects.ts`. It's typed, so you'll get autocompletion for the properties.
 
+### Testing
+
+Tests run with [Vitest](https://vitest.dev/) and
+[Testing Library](https://testing-library.com/). Test files live next to the code
+they cover as `*.test.ts` / `*.test.tsx` (see `src/app/page.test.tsx` and
+`src/lib/env/server.test.ts` for examples).
+
+```bash
+pnpm test         # run once
+pnpm test:watch   # watch mode
+```
+
+Files that need the Node environment instead of jsdom (for example, code that reads
+server-side env vars) opt in with a `// @vitest-environment node` comment at the top
+of the file.
+
 ### CSP (Content Security Policy)
 
 The Content Security Policy (CSP) is a security layer that helps to detect and mitigate certain types of attacks, including Cross-Site Scripting (XSS) and data injection attacks. The CSP is implemented in the `next.config.ts` file.
 
-It contains a default and minimal policy that you can customize to fit your application needs. It's a foundation to build upon.
+It contains a strict-but-minimal baseline that you customize as your app grows. Each
+directive is listed separately with inline notes on how to open it up when you add
+analytics, an image CDN, external API calls, or embedded frames. When you add a
+third-party script or resource, update the matching directive
+(`script-src`, `img-src`, `connect-src`, `font-src`, `frame-src`) in `next.config.ts`.
 
 ### Husky
 
-Husky is a tool that helps us run scrips before Git events. We have 3 hooks:
+Husky is a tool that helps us run scripts before Git events. We have 4 hooks:
 
 - `pre-commit` — (Disabled by default) Runs lint-staged to lint and format the files.
+- `pre-push` — (Disabled by default) Runs `pnpm verify` (type-check, tests, format, lint) so you catch CI failures before pushing.
 - `commit-msg` — Runs commitlint to check if the commit message follows the conventional commit message format.
 - `post-merge` — Runs pnpm install to update the dependencies if there was a change in the `pnpm-lock.yaml` file.
 
-> Important note: Husky is disabled by default in the pre-commit hook. This is intention because most developers don't want to run lint-staged on every commit. If you want to enable it, run `echo 'HUSKY_ENABLED=true' > .husky/_/pre-commit.options`.
+> Important note: The `pre-commit` and `pre-push` hooks are disabled by default. This is intentional because most developers don't want them running on every commit/push. To enable them, run `echo 'HUSKY_ENABLED=true' > .husky/_/pre-commit.options` and/or `echo 'HUSKY_ENABLED=true' > .husky/_/pre-push.options`.
 
 ## License
 

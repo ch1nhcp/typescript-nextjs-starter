@@ -160,15 +160,6 @@
       }
     },
     {
-      "files": ["./**/*.ts", "./**/*.tsx"],
-      "rules": {
-        "@typescript-eslint/explicit-function-return-type": "off",
-        "@typescript-eslint/explicit-module-boundary-types": "off",
-        "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-var-requires": "off"
-      }
-    },
-    {
       "files": ["**/*.d.ts"],
       "rules": {
         "import-x/no-duplicates": "off"

@@ -1,0 +1,23 @@
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+
+import Home from './page';
+
+describe('Home page', () => {
+  it('renders the main heading', () => {
+    render(<Home />);
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: /Non-opinionated TypeScript starter for Next\.js/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the Next.js logo with accessible alt text', () => {
+    render(<Home />);
+
+    expect(screen.getByAltText('Next.js logo')).toBeInTheDocument();
+  });
+});

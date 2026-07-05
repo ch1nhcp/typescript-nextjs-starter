@@ -8,6 +8,21 @@ export const clientEnv = createEnv({
    */
   client: {},
 
+  /**
+   * Every `NEXT_PUBLIC_*` variable you add to the `client` schema above MUST also be mapped here,
+   * because Next.js only inlines `process.env.NEXT_PUBLIC_*` when referenced statically.
+   *
+   * @example
+   * client: {
+   *   NEXT_PUBLIC_API_URL: z.string().url(),
+   * },
+   * experimental__runtimeEnv: {
+   *   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+   * },
+   *
+   * Forgetting the mapping leads to hard-to-debug runtime errors where the variable reads as
+   * `undefined` in the browser even though it's set. See https://env.t3.gg/docs/nextjs.
+   */
   experimental__runtimeEnv: {},
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

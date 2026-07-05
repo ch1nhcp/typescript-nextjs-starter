@@ -7,7 +7,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    name: Run Type Check & Linters
+    name: Type Check, Test, Build & Lint
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -27,17 +27,27 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
-          node-version: lts/*
-
-      - name: Setup pnpm config
-        shell: bash
-        run: pnpm config set store-dir ~/.pnpm-store
+          # Keep the CI Node version in sync with `.nvmrc` for reproducible builds.
+          node-version-file: '.nvmrc'
+          # Cache the pnpm store so subsequent runs restore dependencies instead of
+          # downloading the full store on every PR.
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Check types
         run: pnpm type-check
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+        env:
+          # The build only needs env validation to pass; real secrets are injected
+          # per-environment at deploy time, not in CI.
+          SKIP_ENV_VALIDATION: 'true'
 
       - name: Check Oxfmt
         run: pnpm format:ci
